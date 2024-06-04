@@ -1,0 +1,28 @@
+version: '3.8'
+services:
+  server:
+    container_name: sc_server
+    image: sc_server
+    build: .
+    ports:
+      - "8888:80"
+    volumes:
+      - .:/app
+    depends_on:
+      - elasticsearch
+    restart: always
+
+  elasticsearch:
+    container_name: sc_elasticsearch
+    image: elasticsearch:8.13.4
+    environment:
+      - discovery.type=single-node
+      - ELASTIC_PASSWORD=pass
+    ports:
+      - "9200:9200"
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+
+volumes:
+  esdata:
+    driver: local
