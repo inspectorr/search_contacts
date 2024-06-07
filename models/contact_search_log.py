@@ -15,3 +15,6 @@ class ContactSearchLog(Base):
     user_agent = Column(String, nullable=True)
     accept_language = Column(String, nullable=True)
     client_ip = Column(String, nullable=True)
+
+    def __repr__(self):
+        return f"ContactSearchLog(id={self.id}, search_query={self.search_query})"
