@@ -15,7 +15,6 @@ def search_contacts_elastic(
 ) -> (list[ContactSearchResult], int):
     """
     Найти контакты в индексе эластика.
-    Поисковая строка допускает 0-2 опечатки в зависимости от длины.
 
     Args:
         search_query (str): запрос
