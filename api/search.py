@@ -8,9 +8,10 @@ from services.contact_search_log import create_contact_search_log
 
 router = APIRouter()
 
-logger = logging.getLogger(__name__)  # todo: set up logging + more logs
+logger = logging.getLogger(__name__)
 
-# todo sql fallback
+
+MAX_QUERY_LENGTH = 30
 
 
 @router.get("/search/")
@@ -19,15 +20,23 @@ def search_contacts(
     search_query: str,
     background_tasks: BackgroundTasks
 ):
+    if not search_query:
+        raise HTTPException(status_code=400, detail="Search query is empty")
+    if len(search_query) > MAX_QUERY_LENGTH:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Search query is longer than {MAX_QUERY_LENGTH} characters"
+        )
     try:
-        contacts = search_contacts_elastic(search_query)
+        contacts, total_contacts = search_contacts_elastic(search_query)
         background_tasks.add_task(
-            create_contact_search_log,
-            search_query,
-            contacts,
-            get_request_metadata(request)
+            func=create_contact_search_log,
+            search_query=search_query,
+            search_result=contacts,
+            search_result_count=total_contacts,
+            search_metadata=get_request_metadata(request)
         )
         return {"result": contacts}
     except Exception as e:
-        logger.error(e)
-        raise HTTPException(status_code=500, detail="Error!")
+        logger.error('Error searching contacts: %s', e, exc_info=True)
+        raise HTTPException(status_code=503, detail="Service Unavailable")

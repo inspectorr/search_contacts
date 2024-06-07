@@ -12,17 +12,37 @@ def create_contacts_index(es: Elasticsearch):
         return
     es.indices.create(index="contacts-index", body={
         "settings": {
-            "number_of_shards": 1,
-            "number_of_replicas": 1
+            "analysis": {
+                "analyzer": {
+                    "edge_ngram_analyzer": {
+                        "type": "custom",
+                        "tokenizer": "edge_ngram_tokenizer",
+                        "filter": ["lowercase"]
+                    }
+                },
+                "tokenizer": {
+                    "edge_ngram_tokenizer": {
+                        "type": "edge_ngram",
+                        "min_gram": 1,
+                        "max_gram": 10,
+                        "token_chars": ["letter", "digit"]
+                    }
+                }
+            }
         },
         "mappings": {
             "properties": {
                 "id": {
-                    "type": "integer",
+                    "type": "integer"
                 },
                 "name": {
                     "type": "text",
-                    "analyzer": "standard"
+                    "analyzer": "edge_ngram_analyzer",
+                    "fields": {
+                        "keyword": {
+                            "type": "keyword"
+                        }
+                    }
                 }
             }
         }
@@ -39,7 +59,7 @@ def add_data_to_contacts_index(es: Elasticsearch):
             "id": contact.id,
             "name": contact.name
         }
-        es.index(index="contacts-index", document=document)
+        es.index(index="contacts-index", id=contact.id, document=document)
 
     print("Data added to contacts-index")
 
